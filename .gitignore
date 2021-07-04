@@ -1,2 +1,4 @@
 environments/environment.json
 node_modules
+package-lock.json
+logs/*
