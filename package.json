@@ -1,0 +1,14 @@
+{
+  "name": "leia-rapidinho-backend",
+  "version": "1.0.0",
+  "description": "Backend da aplicacao Leia Rapidinho",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Pedro Guedes Braga",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
+}
