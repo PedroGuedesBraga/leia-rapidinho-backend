@@ -1,7 +1,7 @@
 const Joi = require('joi');
 
 const userRegistrationSchema = Joi.object({
-    username: Joi.string()
+    userName: Joi.string()
         .pattern(/([A-Za-z])+/)
         .min(2)
         .max(50)
