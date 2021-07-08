@@ -1,7 +1,10 @@
 {
-    "dbConnectionString": "mongodb://localhost:27017/leia-rapidinho",
+    "DB_CONNECTION_STRING": "mongodb://localhost:27017/leia-rapidinho",
     "SENDGRID_API_KEY": "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",
     "SENDGRID_SENDER_EMAIL": "leiarapidinho.noreply@gmail.com",
     "SENDGRID_REGISTRATION_EMAIL_SUBJECT": "Confirme sua conta no Leia Rapidinho!",
-    "EMAIL_CONFIRMATION_URL": "http://localhost:8090/users/verify"
+    "EMAIL_CONFIRMATION_URL": "http://localhost:8090/users/verify",
+    "EMAIL_REGISTRATION_TOKEN_SECRET": "l314r4P1D1NH0b4Ck3nD",
+    "EMAIL_REGISTRATION_TOKEN_TTL": "1h",
+    "REDIRECT_EMAIL_VALIDATION_SUCCESS": "https://google.com/"
 }

@@ -6,7 +6,7 @@ const config = require('./config/config.json');
 const bodyParser = require('body-parser');
 const fs = require('fs');
 
-const dbConnection = config.dbConnectionString;
+const dbConnection = config.DB_CONNECTION_STRING;
 app.use(bodyParser.json());
 
 //Importando rotas na aplicacao

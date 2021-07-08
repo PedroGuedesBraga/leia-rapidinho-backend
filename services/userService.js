@@ -2,6 +2,7 @@ const userModel = require('../models/user');
 const logger = require('../logger/logger');
 const sgMail = require('@sendgrid/mail');
 const config = require('../config/config.json');
+const jwt = require('jsonwebtoken');
 
 class UserService {
     constructor() {
@@ -9,6 +10,7 @@ class UserService {
         this.logger = logger;
         this.config = config;
         this.sgMail = sgMail;
+        this.jwt = jwt;
         sgMail.setApiKey(config.SENDGRID_API_KEY);
     }
 
@@ -17,19 +19,43 @@ class UserService {
             const user = await this.userModel.findOne({ email })
             if (user && user.validated === true) {
                 throw new Error('Usuario ja cadastrado com esse endereço de e-mail');
-            } else if (user) {
-                const code = 1234;
-                user.name = name; user.lastName = lastName; user.password = password;
-                await user.save();
             } else {
-                const code = 1234;
-                await this.userModel.create({ name, lastName, password, email, validated: false });
+                const token = this.jwt.sign(
+                    { sub: email, iss: "leia-rapidinho-backend" },
+                    this.config.EMAIL_REGISTRATION_TOKEN_SECRET,
+                    { expiresIn: this.config.EMAIL_REGISTRATION_TOKEN_TTL }
+                );
+                if (user) {
+                    user.name = name; user.lastName = lastName; user.password = password;
+                    await user.save();
+                } else {
+                    await this.userModel.create({ name, lastName, password, email, validated: false });
+                }
+                const message = this._buildRegistrationEmailMessage(name, email, token);
+                await sgMail.send(message);
+                this.logger.debug(`Usuario cadastrado. Email enviado para o endereço ${email}`);
             }
-            const message = this._buildRegistrationEmailMessage(name, email, 'sjadaso');
-            await sgMail.send(message);
         } catch (err) {
             this.logger.error(`Ocorreu um erro ao tentar criar um novo usuario com email ${JSON.stringify(email)} => ${JSON.stringify(err.message)}`);
+            throw err;
         }
+    }
+
+    async validateUserEmail(token) {
+        try {
+            const decoded = await this.jwt.verify(token, this.config.EMAIL_REGISTRATION_TOKEN_SECRET);
+            const email = decoded.sub;
+            const user = await this.userModel.findOne({ email });
+            if (!user) {
+                throw new Error(`Usuario de email ${email} nao encontrado na base de dados. Não foi possivel validar`);
+            }
+            user.validated = true;
+            await user.save()
+        } catch (err) {
+            this.logger.debug(`Ocorreu um erro ao tentar validar o token ${token}`);
+            throw err;
+        }
+
     }
 
     _buildRegistrationEmailMessage(username, email, token) {
