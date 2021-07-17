@@ -12,7 +12,14 @@ const userRegistrationSchema = Joi.object({
         .max(50)
         .required(),
     password: Joi.string()
-        .pattern(/[A-Za-z0-9]*/)
+        .alphanum()
+        .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
+        .min(8)
+        .max(30)
+        .required(),
+    passwordConfirmation: Joi.string()
+        .alphanum()
+        .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
         .min(8)
         .max(30)
         .required(),

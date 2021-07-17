@@ -4,16 +4,16 @@ const mongoose = require('mongoose');
 const logger = require('./logger/logger.js');
 const config = require('./config/config.json');
 const bodyParser = require('body-parser');
-const fs = require('fs');
+const cors = require('cors');
 
 const dbConnection = config.DB_CONNECTION_STRING;
 app.use(bodyParser.json());
+app.use(cors());
 
 //Importando rotas na aplicacao
-fs.readdirSync('./routes').forEach(filename => {
-    let route = require(`./routes/${filename}`);
-    app.use(route)
-});
+const userRoutes = require('./routes/routes')
+
+app.use(userRoutes);
 
 //Conectando a aplicacao na base de dados
 mongoose.connect(dbConnection, {

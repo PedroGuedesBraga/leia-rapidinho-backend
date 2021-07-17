@@ -16,9 +16,9 @@ class UserService {
 
     async register(name, lastName, password, email) {
         try {
-            const user = await this.userModel.findOne({ email })
+            const user = await this.userModel.findOne({ email });
             if (user && user.validated === true) {
-                throw new Error('Usuario ja cadastrado com esse endereço de e-mail');
+                return { code: 1, message: "Usuario ja cadastrado" }
             } else {
                 const token = this.jwt.sign(
                     { sub: email, iss: "leia-rapidinho-backend" },
@@ -34,6 +34,7 @@ class UserService {
                 const message = this._buildRegistrationEmailMessage(name, email, token);
                 await sgMail.send(message);
                 this.logger.debug(`Usuario cadastrado. Email enviado para o endereço ${email}`);
+                return { code: 0, message: "Usuario cadastrado sem e-mail confirmado com sucesso" }
             }
         } catch (err) {
             this.logger.error(`Ocorreu um erro ao tentar criar um novo usuario com email ${JSON.stringify(email)} => ${JSON.stringify(err.message)}`);
