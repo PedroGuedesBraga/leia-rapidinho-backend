@@ -10,6 +10,27 @@ class UserController {
         this.config = config;
     }
 
+    async login(req, res, next) {
+        try {
+            const { email, password } = req.body;
+            if (!email || !password) {
+                res.status(400).send({ message: 'Credenciais inválidas' });
+                return next();
+            }
+            const result = await this.userService.login(email, password);
+            if (!result.success) {
+                res.status(401).send({ message: 'Credenciais invalidas' });
+            } else {
+                res.setHeader('Set-Cookie', `access_token=${result.accessToken};Max-Age=${result.expiration};HttpOnly`)
+                res.status(200).send();
+            }
+        } catch (err) {
+            this.logger.error(`Ocorreu um erro ao tentar logar com o email ${email}. => ${err}`);
+            res.send(500);
+        }
+        return next();
+    }
+
     async register(req, res, next) {
         const validation = await userRegistrationSchema.validate(req.body);
         if (validation.error) {
@@ -49,6 +70,8 @@ class UserController {
             res.send(400);
         }
     }
+
+
 }
 
 module.exports = new UserController();

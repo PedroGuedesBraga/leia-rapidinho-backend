@@ -4,11 +4,13 @@ const mongoose = require('mongoose');
 const logger = require('./logger/logger.js');
 const config = require('./config/config.json');
 const bodyParser = require('body-parser');
+const cookieParser = require('cookie-parser');
 const cors = require('cors');
 
 const dbConnection = config.DB_CONNECTION_STRING;
 app.use(bodyParser.json());
 app.use(cors());
+app.use(cookieParser());
 
 //Importando rotas na aplicacao
 const userRoutes = require('./routes/routes')

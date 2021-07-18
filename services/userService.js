@@ -3,6 +3,7 @@ const logger = require('../logger/logger');
 const sgMail = require('@sendgrid/mail');
 const config = require('../config/config.json');
 const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 class UserService {
     constructor() {
@@ -12,6 +13,27 @@ class UserService {
         this.sgMail = sgMail;
         this.jwt = jwt;
         sgMail.setApiKey(config.SENDGRID_API_KEY);
+    }
+
+    async login(email, password) {
+        try {
+            const user = await this.userModel.findOne({ email }).select({ password: 1, validated: 1 });
+            if (!user || !user.validated) {
+                return { success: false, message: "Usuario nao cadastrado" };
+            }
+            const match = await bcrypt.compare(password, user.password);
+            if (!match) {
+                return { success: false, message: "Credenciais invalidas" }
+            }
+            const accessToken = await jwt.sign({ sub: email, iss: "leia-rapidinho-backend" },
+                this.config.ACCESS_TOKEN_SECRET,
+                { expiresIn: this.config.ACCESS_TOKEN_TTL }
+            );
+            return { success: true, accessToken, expiration: this.config.ACCESS_TOKEN_TTL };
+        } catch (err) {
+            this.logger.error(`Houve um erro ao tentar realizar o login: ${err}`);
+            throw err;
+        }
     }
 
     async register(name, lastName, password, email) {
@@ -25,11 +47,13 @@ class UserService {
                     this.config.EMAIL_REGISTRATION_TOKEN_SECRET,
                     { expiresIn: this.config.EMAIL_REGISTRATION_TOKEN_TTL }
                 );
+                const salt = await bcrypt.genSalt(15);
+                const hashedPassword = await bcrypt.hash(password, salt);
                 if (user) {
-                    user.name = name; user.lastName = lastName; user.password = password;
+                    user.name = name; user.lastName = lastName; user.password = hashedPassword;
                     await user.save();
                 } else {
-                    await this.userModel.create({ name, lastName, password, email, validated: false });
+                    await this.userModel.create({ name, lastName, password: hashedPassword, email, validated: false });
                 }
                 const message = this._buildRegistrationEmailMessage(name, email, token);
                 await sgMail.send(message);
