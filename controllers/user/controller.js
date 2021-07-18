@@ -21,8 +21,7 @@ class UserController {
             if (!result.success) {
                 res.status(401).send({ message: 'Credenciais invalidas' });
             } else {
-                res.setHeader('Set-Cookie', `access_token=${result.accessToken};Max-Age=${result.expiration};HttpOnly`)
-                res.status(200).send();
+                res.status(200).send({ access_token: result.accessToken });
             }
         } catch (err) {
             this.logger.error(`Ocorreu um erro ao tentar logar com o email ${email}. => ${err}`);
