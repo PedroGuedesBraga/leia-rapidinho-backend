@@ -1,4 +1,5 @@
 const userModel = require('../models/user');
+const tokenModel = require('../models/token');
 const logger = require('../logger/logger');
 const sgMail = require('@sendgrid/mail');
 const config = require('../config/config.json');
@@ -8,6 +9,7 @@ const bcrypt = require('bcrypt');
 class UserService {
     constructor() {
         this.userModel = userModel;
+        this.tokenModel = tokenModel;
         this.logger = logger;
         this.config = config;
         this.sgMail = sgMail;
@@ -80,8 +82,64 @@ class UserService {
             this.logger.debug(`Ocorreu um erro ao tentar validar o token ${token}`);
             throw err;
         }
-
     }
+
+    async createResetToken(email) {
+        try {
+            const user = await this.userModel.findOne({ email });
+            if (!user) {
+                throw new Error(`Usuario de email ${email} nao encontrado na base de dados. Não foi possivel validar`);
+            }
+            const token = this._generateRandomToken();
+            await this.tokenModel.create({ value: token, email, createdAt: new Date() });
+            const message = this._buildTokenEmailMessage(email, token);
+            await sgMail.send(message);
+            this.logger.info(`Token (${token}) para resetar senha enviado com sucesso para ${email}`);
+        } catch (err) {
+            this.logger.error(`Erro ao criar/enviar token para o email ${email}. Erro => ${JSON.stringify(err)}`);
+            throw new Error('Erro na criacao/envio de token');
+        }
+    }
+
+    async resetPassword(email, currentPassword, newPassword, token) {
+        try {
+            const user = await this.userModel.findOne({ email, validated: true });
+            if (!user) {
+                this.logger.error(`Usuario de email ${email} nao encontrado na base`);
+                throw new Error(`Usuario de email ${email} nao encontrado na base de dados.`);
+            }
+            const match = await bcrypt.compare(currentPassword, user.password);
+            if (!match) {
+                this.logger.error(`Senha digitada incorreta para o email ${email}`);
+                throw new Error(`Erro na verificacao de senha`);
+            }
+            const dbToken = await this.tokenModel.findOne({ value: token, email });
+            if (!dbToken) {
+                this.logger.error(`Token ${token} invalido ou nao existe para o email: ${email}`);
+                throw new Error('Token invalido ou nao existente');
+            }
+            const salt = await bcrypt.genSalt(15);
+            const hashedNewPassword = await bcrypt.hash(newPassword, salt);
+            user.password = hashedNewPassword;
+            await user.save();
+        } catch (err) {
+            this.logger.error(`Ocorreu um erro na redefinicao de senha do usuario com email ${email}. => ${JSON.stringify(err)}`);
+            throw err;
+        }
+    }
+
+
+    _generateRandomToken() {
+        const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+        const TOKEN_SIZE = 6;
+        let randomToken = "";
+        for (let i = 0; i < TOKEN_SIZE; i++) {
+            const randomNum = Math.floor(Math.random() * characters.length);
+            randomToken += characters[randomNum];
+        }
+        return randomToken;
+    }
+
 
     _buildRegistrationEmailMessage(username, email, token) {
         return {
@@ -98,6 +156,22 @@ class UserService {
         }
 
     }
+
+    _buildTokenEmailMessage(email, token) {
+        return {
+            to: email, // Change to your recipient
+            from: 'leiarapidinho.noreply@gmail.com', // Change to your verified sender
+            subject: '[Leia Rapidinho] - Redefina sua senha',
+            html: `
+            <p>Olá, use o código abaixo para redefinir a sua senha:</p>
+            <p>CÓDIGO: <b>${token}</b></p>
+            `
+        }
+
+    }
+
+
+
 
 }
 

@@ -12,6 +12,10 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(cookieParser());
 
+app.on('request', (req, res, next) => {
+    console.log("request: " + JSON.stringify(req))
+})
+
 //Importando rotas na aplicacao
 const userRoutes = require('./routes/routes')
 

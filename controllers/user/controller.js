@@ -1,4 +1,4 @@
-const { userRegistrationSchema } = require('../../validators/user');
+const { userRegistrationSchema, emailSchema, passwordSchema, tokenSchema } = require('../../validators/user');
 const logger = require('../../logger/logger');
 const userService = require('../../services/userService');
 const config = require('../../config/config.json');
@@ -70,7 +70,43 @@ class UserController {
         }
     }
 
+    async createResetToken(req, res, next) {
+        try {
+            const { email } = req.body;
+            const validation = await emailSchema.validate(email);
+            if (validation.error) {
+                logger.error(`Ocorreu um erro na validação do email a ter senha resetada => ${JSON.stringify({ email, error: validation.error })}`);
+                res.status(400).send({ message: 'Campos mal preenchidos' });
+                return next();
+            }
+            await this.userService.createResetToken(email);
+            res.status(200).send({ message: "Token criado com sucesso" });
+        } catch (err) {
+            logger.error(`Ocorreu um erro na criacao do token de reset => ${JSON.stringify(err)}`);
+            res.status(500).send({ message: "Erro ao criar token de reset" });
+        }
+        return next();
+    }
 
+    async resetPassword(req, res, next) {
+        try {
+            const { email, currentPassword, newPassword, token } = req.body;
+            const emailValidation = await emailSchema.validate(email);
+            const passwordValidation = await passwordSchema.validate(newPassword);
+            const currentPasswordValidation = await passwordSchema.validate(currentPassword);
+            const tokenValidation = await tokenSchema.validate(token);
+            if (emailValidation.error || passwordValidation.error || currentPasswordValidation.error || tokenValidation.error) {
+                logger.error(`Ocorreu um erro na validacao dos dados de entrada => ${JSON.stringify({ requestBody: req.body, error })}`);
+                throw new Error('Erro na validacao dos dados de entrada')
+            }
+            await this.userService.resetPassword(email, currentPassword, newPassword, token);
+            res.status(200).send({ message: 'Senha resetada com sucesso!' });
+        } catch (err) {
+            logger.error(`Erro ao tentar resetar a senha do usuario => ${JSON.stringify(err)}`);
+            res.status(500).send({ message: 'Ocorreu um erro ao tentar redefinir a senha' });
+        }
+        return next();
+    }
 }
 
 module.exports = new UserController();

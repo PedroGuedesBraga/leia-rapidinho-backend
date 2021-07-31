@@ -28,4 +28,15 @@ const userRegistrationSchema = Joi.object({
         .required()
 }).required();
 
-module.exports = { userRegistrationSchema };
+const emailSchema = Joi.string().email().required();
+
+const passwordSchema = Joi.string()
+    .alphanum()
+    .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
+    .min(8)
+    .max(30)
+    .required();
+
+const tokenSchema = Joi.string().alphanum().min(6).max(6).required();
+
+module.exports = { userRegistrationSchema, emailSchema, passwordSchema, tokenSchema };
