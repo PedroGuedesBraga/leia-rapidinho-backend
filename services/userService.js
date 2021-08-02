@@ -101,23 +101,20 @@ class UserService {
         }
     }
 
-    async resetPassword(email, currentPassword, newPassword, token) {
+    async resetPassword(email, newPassword, token) {
         try {
             const user = await this.userModel.findOne({ email, validated: true });
             if (!user) {
                 this.logger.error(`Usuario de email ${email} nao encontrado na base`);
                 throw new Error(`Usuario de email ${email} nao encontrado na base de dados.`);
             }
-            const match = await bcrypt.compare(currentPassword, user.password);
-            if (!match) {
-                this.logger.error(`Senha digitada incorreta para o email ${email}`);
-                throw new Error(`Erro na verificacao de senha`);
-            }
+
             const dbToken = await this.tokenModel.findOne({ value: token, email });
             if (!dbToken) {
                 this.logger.error(`Token ${token} invalido ou nao existe para o email: ${email}`);
                 throw new Error('Token invalido ou nao existente');
             }
+            await this.tokenModel.findByIdAndRemove(dbToken._id);
             const salt = await bcrypt.genSalt(15);
             const hashedNewPassword = await bcrypt.hash(newPassword, salt);
             user.password = hashedNewPassword;

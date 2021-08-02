@@ -90,16 +90,15 @@ class UserController {
 
     async resetPassword(req, res, next) {
         try {
-            const { email, currentPassword, newPassword, token } = req.body;
+            const { email, newPassword, token } = req.body;
             const emailValidation = await emailSchema.validate(email);
             const passwordValidation = await passwordSchema.validate(newPassword);
-            const currentPasswordValidation = await passwordSchema.validate(currentPassword);
             const tokenValidation = await tokenSchema.validate(token);
-            if (emailValidation.error || passwordValidation.error || currentPasswordValidation.error || tokenValidation.error) {
+            if (emailValidation.error || passwordValidation.error || tokenValidation.error) {
                 logger.error(`Ocorreu um erro na validacao dos dados de entrada => ${JSON.stringify({ requestBody: req.body, error })}`);
                 throw new Error('Erro na validacao dos dados de entrada')
             }
-            await this.userService.resetPassword(email, currentPassword, newPassword, token);
+            await this.userService.resetPassword(email, newPassword, token);
             res.status(200).send({ message: 'Senha resetada com sucesso!' });
         } catch (err) {
             logger.error(`Erro ao tentar resetar a senha do usuario => ${JSON.stringify(err)}`);
