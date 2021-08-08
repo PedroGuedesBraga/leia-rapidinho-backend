@@ -58,16 +58,18 @@ class UserController {
 
     async validateUserEmail(req, res, next) {
         const token = req.query && req.query.token;
-        if (token) {
+        const email = req.query && req.query.email;
+        if (token && email) {
             try {
-                await this.userService.validateUserEmail(token)
-                res.redirect(this.config.REDIRECT_EMAIL_VALIDATION_SUCCESS);
+                await this.userService.validateUserEmail(token, email)
+                res.send(200);
             } catch (err) {
                 res.send(500);
             }
         } else {
             res.send(400);
         }
+        return next();
     }
 
     async createResetToken(req, res, next) {

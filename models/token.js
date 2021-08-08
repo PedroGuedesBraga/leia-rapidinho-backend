@@ -6,4 +6,7 @@ const tokenSchema = mongoose.Schema({
     createdAt: { type: Date, required: true }
 });
 
-module.exports = mongoose.model('token', tokenSchema);
+module.exports = {
+    accountValidationTokenModel: mongoose.model('accountValidationToken', tokenSchema),
+    resetPasswordTokenModel: mongoose.model('emailVerificationToken', tokenSchema)
+};

@@ -13,13 +13,13 @@ const userRegistrationSchema = Joi.object({
         .required(),
     password: Joi.string()
         .alphanum()
-        .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
+        .pattern(/([0-9]+[A-Za-z]|[A-Za-z]+[0-9])[A-Za-z0-9]*/)
         .min(8)
         .max(30)
         .required(),
     passwordConfirmation: Joi.string()
         .alphanum()
-        .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
+        .pattern(/([0-9]+[A-Za-z]|[A-Za-z]+[0-9])[A-Za-z0-9]*/)
         .min(8)
         .max(30)
         .required(),
@@ -32,7 +32,7 @@ const emailSchema = Joi.string().email().required();
 
 const passwordSchema = Joi.string()
     .alphanum()
-    .pattern(/([0-9]+[a-z]|[a-z]+[0-9])[a-z0-9]*/)
+    .pattern(/([0-9]+[A-Za-z]|[A-Za-z]+[0-9])[A-Za-z0-9]*/)
     .min(8)
     .max(30)
     .required();

@@ -1,5 +1,5 @@
 const userModel = require('../models/user');
-const tokenModel = require('../models/token');
+const { resetPasswordTokenModel, accountValidationTokenModel } = require('../models/token');
 const logger = require('../logger/logger');
 const sgMail = require('@sendgrid/mail');
 const config = require('../config/config.json');
@@ -9,7 +9,8 @@ const bcrypt = require('bcrypt');
 class UserService {
     constructor() {
         this.userModel = userModel;
-        this.tokenModel = tokenModel;
+        this.resetPasswordTokenModel = resetPasswordTokenModel;
+        this.accountValidationTokenModel = accountValidationTokenModel;
         this.logger = logger;
         this.config = config;
         this.sgMail = sgMail;
@@ -57,6 +58,7 @@ class UserService {
                 } else {
                     await this.userModel.create({ name, lastName, password: hashedPassword, email, validated: false });
                 }
+                await this.accountValidationTokenModel.create({ value: token, email, createdAt: new Date() });
                 const message = this._buildRegistrationEmailMessage(name, email, token);
                 await sgMail.send(message);
                 this.logger.debug(`Usuario cadastrado. Email enviado para o endereço ${email}`);
@@ -68,16 +70,24 @@ class UserService {
         }
     }
 
-    async validateUserEmail(token) {
+    async validateUserEmail(token, email) {
         try {
             const decoded = await this.jwt.verify(token, this.config.EMAIL_REGISTRATION_TOKEN_SECRET);
-            const email = decoded.sub;
+            const jwtEmail = decoded.sub;
+            if (jwtEmail !== email) {
+                throw new Error('Token invalido');
+            }
+            const dbToken = await this.accountValidationTokenModel.findOne({ value: token, email });
+            if (!dbToken) {
+                throw new Error('Token nao existe na base de dados.')
+            }
+            await this.accountValidationTokenModel.findByIdAndRemove(dbToken._id);
             const user = await this.userModel.findOne({ email });
             if (!user) {
                 throw new Error(`Usuario de email ${email} nao encontrado na base de dados. Não foi possivel validar`);
             }
             user.validated = true;
-            await user.save()
+            await user.save();
         } catch (err) {
             this.logger.debug(`Ocorreu um erro ao tentar validar o token ${token}`);
             throw err;
@@ -91,7 +101,7 @@ class UserService {
                 throw new Error(`Usuario de email ${email} nao encontrado na base de dados. Não foi possivel validar`);
             }
             const token = this._generateRandomToken();
-            await this.tokenModel.create({ value: token, email, createdAt: new Date() });
+            await this.resetPasswordTokenModel.create({ value: token, email, createdAt: new Date() });
             const message = this._buildTokenEmailMessage(email, token);
             await sgMail.send(message);
             this.logger.info(`Token (${token}) para resetar senha enviado com sucesso para ${email}`);
@@ -109,12 +119,12 @@ class UserService {
                 throw new Error(`Usuario de email ${email} nao encontrado na base de dados.`);
             }
 
-            const dbToken = await this.tokenModel.findOne({ value: token, email });
+            const dbToken = await this.resetPasswordTokenModel.findOne({ value: token, email });
             if (!dbToken) {
                 this.logger.error(`Token ${token} invalido ou nao existe para o email: ${email}`);
                 throw new Error('Token invalido ou nao existente');
             }
-            await this.tokenModel.findByIdAndRemove(dbToken._id);
+            await this.resetPasswordTokenModel.findByIdAndRemove(dbToken._id);
             const salt = await bcrypt.genSalt(15);
             const hashedNewPassword = await bcrypt.hash(newPassword, salt);
             user.password = hashedNewPassword;
@@ -145,7 +155,7 @@ class UserService {
             subject: '[Leia Rapidinho] - Conclua seu cadastro',
             html: `
             <p>Olá <strong>${username}</strong>, falta só um pouco para concluir seu cadastro no Leia Rapidinho!</p>
-            <p>Para concluir seu cadastro, confirme seu e-mail. Clique <a href="${this.config.EMAIL_CONFIRMATION_URL}?token=${token}">AQUI</a></p>
+            <p>Para concluir seu cadastro, confirme seu e-mail. Clique <a href="${this.config.EMAIL_CONFIRMATION_URL}?token=${token}&email=${email}">AQUI</a></p>
             <p style="font-size:11px;">
             <i>(Caso não saiba do que está sendo tratado nesse e-mail, ignore-o)</i>
             </p>
