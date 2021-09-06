@@ -9,5 +9,6 @@ router.get(`${BASE}/verify`, usersController.validateUserEmail.bind(usersControl
 router.post(`${BASE}/reset/validate`, usersController.resetPassword.bind(usersController));
 router.post(`${BASE}/reset/send`, usersController.createResetToken.bind(usersController));
 router.post(`/words`, gameController.getWords.bind(gameController));
+router.post(`/saveGame`, gameController.saveGame.bind(gameController));
 
 module.exports = router;
