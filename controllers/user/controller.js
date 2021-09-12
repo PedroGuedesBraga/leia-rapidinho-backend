@@ -108,6 +108,23 @@ class UserController {
         }
         return next();
     }
+
+    async getUserProfile(req, res, next) {
+        try {
+            const { email } = req.body;
+            if (!email) {
+                res.status(400).send({ message: "Campos obrigatorios mal preenchidos." })
+                return next();
+            }
+            const response = await userService.getUserProfile(email);
+            res.status(200).send(response);
+            return next();
+        } catch (err) {
+            logger.error(`Erro ao tentar recuperar perfil do usuario. => ${JSON.stringify(err)}`);
+            res.status(500).send({ message: 'Ocorreu um erro interno' });
+            return next();
+        }
+    }
 }
 
 module.exports = new UserController();

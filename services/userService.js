@@ -5,6 +5,9 @@ const sgMail = require('@sendgrid/mail');
 const config = require('../config/config.json');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const gameModel = require('../models/game');
+const wordsModel = require('../models/word');
+
 
 class UserService {
     constructor() {
@@ -16,6 +19,8 @@ class UserService {
         this.sgMail = sgMail;
         this.jwt = jwt;
         sgMail.setApiKey(config.SENDGRID_API_KEY);
+        this.gameModel = gameModel;
+        this.wordsModel = wordsModel;
     }
 
     async login(email, password) {
@@ -133,6 +138,50 @@ class UserService {
             this.logger.error(`Ocorreu um erro na redefinicao de senha do usuario com email ${email}. => ${JSON.stringify(err)}`);
             throw err;
         }
+    }
+
+    async getUserProfile(email) {
+        try {
+            const user = await userModel.findOne({ email });
+            if (!user) {
+                this.logger.error(`Nenhum usuario encontrado para ${email}`);
+                throw new Error('Nenhum usuario encontrado');
+            }
+            const allMatches = await gameModel.find({ participantEmail: email }).sort({ date: 'desc' }).limit(15);
+            const wordsRead = allMatches.reduce((acc, item) => { return [...acc, ...item.wordsRead] }, [])
+            const wordsDetailed = await wordsModel.find({ word: { $in: wordsRead } });
+            return {
+                name: user.name,
+                lastName: user.lastName,
+                wordsSummary: this._summarizeWordsByDifficulty(wordsRead, wordsDetailed),
+                chartData: this._summarizeWordsByMatches(allMatches)
+            }
+        } catch (err) {
+            this.logger.info(`Erro ao recuperar perfil. ${email}`)
+            throw new Error("Erro ao tentar recuperar perfil");
+        }
+    }
+
+    _summarizeWordsByMatches(matches) {
+        return matches.map(match => {
+            return match.wordsRead.length;
+        });
+    }
+
+    _summarizeWordsByDifficulty(wordsRead, wordsDetailed) {
+        return wordsRead.reduce((summary, currWord) => {
+            const wordDetailed = wordsDetailed.find(item => item.word === currWord);
+            if (wordDetailed) {
+                if (wordDetailed.level === 'easy') {
+                    summary.easy++;
+                } else if (wordDetailed.level === 'medium') {
+                    summary.medium++;
+                } else {
+                    summary.hard++;
+                }
+            }
+            return summary;
+        }, { easy: 0, medium: 0, hard: 0 })
     }
 
 

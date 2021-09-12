@@ -20,7 +20,7 @@ class GameService {
                 throw new Error('Usuario nao existe na base');
             }
             const level = userFound.level;
-            const words = await wordsModel.aggregate([{ $match: { "level": { $lte: level } } }, { $sample: { size: 5 } }]);
+            const words = await wordsModel.aggregate([{ $sample: { size: 5 } }]);
             const time = words.reduce((totalTime, word) => totalTime + word.readingTime, 0);
             return { words, totalTime: time, level };
         } catch (err) {
