@@ -12,9 +12,6 @@ app.use(bodyParser.json());
 app.use(cors());
 app.use(cookieParser());
 
-app.on('request', (req, res, next) => {
-    console.log("request: " + JSON.stringify(req))
-})
 
 //Importando rotas na aplicacao
 const userRoutes = require('./routes/routes')
@@ -30,6 +27,7 @@ mongoose.connect(dbConnection, {
 });
 
 //Iniciando servidor
-app.listen(process.env.PORT, () => {
-    logger.info(`A aplicacao esta rodando na porta ${process.env.PORT}`);
+const PORT = process.env.PORT || 8090;
+app.listen(PORT, () => {
+    logger.info(`A aplicacao esta rodando na porta ${PORT}`);
 });
