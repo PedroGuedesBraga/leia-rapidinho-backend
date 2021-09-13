@@ -29,9 +29,9 @@ class GameService {
         }
     }
 
-    async saveGame(participantEmail, wordsRead, difficulty) {
+    async saveGame(participantEmail, wordsRead) {
         try {
-            await gameModel.create({ participantEmail, wordsRead, difficulty, date: new Date() });
+            await gameModel.create({ participantEmail, wordsRead, date: new Date() });
         } catch (err) {
             this.logger.error(`Ocorreu um erro ao tentar salvar a partida para o ${participantEmail} => ${JSON.stringify(err)}`);
             throw new Error(`Erro ao tentar salvar partida`);

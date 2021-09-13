@@ -28,14 +28,14 @@ class GameController {
     }
 
     async saveGame(req, res, next) {
-        const { email, difficulty, wordsRead } = req.body;
-        if (!email || !difficulty || !Array.isArray(wordsRead)) {
+        const { email, wordsRead } = req.body;
+        if (!email || !Array.isArray(wordsRead)) {
             res.status(400).send({ message: "Campos obrigatorios mal preenchidos" });
             return next();
         }
         try {
-            this.logger.info(`Salvando jogo para email ${email} e dificuldade ${difficulty}`)
-            await this.gameService.saveGame(email, wordsRead, difficulty);
+            this.logger.info(`Salvando jogo para email ${email} com palavras lidas: ${wordsRead}`)
+            await this.gameService.saveGame(email, wordsRead);
             res.status(200).send({ message: "Partida salva com sucesso!" });
             return next();
         } catch (err) {
