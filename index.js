@@ -24,6 +24,8 @@ mongoose.connect(dbConnection, {
     useUnifiedTopology: true
 }).then(() => {
     logger.info(`Conectado na base de dados: ${dbConnection}`)
+}).catch(err => {
+    logger.info(`Erro ao tentar se conectar no banco: ${dbConnection}`, err);
 });
 
 //Iniciando servidor
