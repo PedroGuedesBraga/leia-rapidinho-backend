@@ -3,7 +3,7 @@
     "SENDGRID_API_KEY": "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",
     "SENDGRID_SENDER_EMAIL": "leiarapidinho.noreply@gmail.com",
     "SENDGRID_REGISTRATION_EMAIL_SUBJECT": "Confirme sua conta no Leia Rapidinho!",
-    "EMAIL_CONFIRMATION_URL": "http://localhost:3000/login",
+    "EMAIL_CONFIRMATION_URL": "https://leia-rapidinho.herokuapp.com/login",
     "EMAIL_REGISTRATION_TOKEN_SECRET": "l314r4l314r4P1D1Nl314r4H0b4Ck3nD",
     "EMAIL_REGISTRATION_TOKEN_TTL": "1h",
     "REDIRECT_EMAIL_VALIDATION_SUCCESS": "https://google.com/",
